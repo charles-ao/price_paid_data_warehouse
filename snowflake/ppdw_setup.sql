@@ -13,9 +13,11 @@ CREATE FILE FORMAT IF NOT EXISTS PPDW.BRONZE.CSV_FILES
   SKIP_HEADER = 0
   FIELD_DELIMITER = ','
   FIELD_OPTIONALLY_ENCLOSED_BY = '"'
+  EMPTY_FIELD_AS_NULL = TRUE
+  NULL_IF = ('');
   COMMENT = 'PPD CSV files with no header row';
 
-DROP STAGE IF EXISTS PPDW.BRONZE.PPD_STAGE;
+
 CREATE STAGE IF NOT EXISTS PPDW.BRONZE.PPD_STAGE
   ENCRYPTION = (TYPE = 'SNOWFLAKE_FULL')
   DIRECTORY = (
@@ -24,8 +26,7 @@ CREATE STAGE IF NOT EXISTS PPDW.BRONZE.PPD_STAGE
     )
   FILE_FORMAT = PPDW.BRONZE.CSV_FILES
   COMMENT = 'Price Paid Data Internal Stage';
-
-  
+    
 
 --------ROLES, USERS AND PERMISSIONS ---------
 
@@ -80,3 +81,39 @@ aQIDAQAB
 
 
 GRANT ROLE PPDW_ROLE TO USER PPDW_USER;
+
+
+------- TABLE CREATION -------------
+
+CREATE TABLE IF NOT EXISTS BRONZE.PPD_RAW (
+    transaction_unique_identifier varchar,
+    price                         varchar,
+    date_of_transfer              varchar,
+    postcode                      varchar,
+    property_type                 varchar,
+    old_new                       varchar,
+    duration                      varchar,
+    paon                          varchar,
+    saon                          varchar,
+    street                        varchar,
+    locality                      varchar,
+    town                          varchar,
+    district                      varchar,
+    county                        varchar,
+    ppd_category_type             varchar,
+    record_status                 varchar,
+    _file_name                    varchar,
+    _loaded_at                    timestamp_ntz,
+    _source_type                  varchar,
+    _version_id                   number
+);
+
+CREATE TABLE IF NOT EXISTS  BRONZE.PPD_LOAD_AUDIT (
+    file_name        varchar not null,   -- e.g. pp-2020_20260828.csv
+    source_type      varchar,            -- yearly / monthly
+    version_id       number,             -- e.g. 20260828
+    source_row_count number,             -- lines counted by Python
+    rows_loaded      number,             -- reported by COPY INTO
+    status           varchar,            -- LOADED / FAILED
+    error_message    varchar
+);
